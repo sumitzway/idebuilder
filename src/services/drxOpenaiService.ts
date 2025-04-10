@@ -25,8 +25,13 @@ export const generateReactNativeCode = async (prompt: string): Promise<string> =
   }
 
   try {
+    // Get configuration from environment variables with fallbacks
+    const model = import.meta.env.VITE_OPENAI_MODEL || "gpt-3.5-turbo";
+    const temperature = parseFloat(import.meta.env.VITE_OPENAI_TEMPERATURE || "0.7");
+    const maxTokens = parseInt(import.meta.env.VITE_OPENAI_MAX_TOKENS || "4000", 10);
+
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model,
       messages: [
         {
           role: "system",
@@ -65,8 +70,8 @@ Each file should be complete and properly formatted with the file marker.`
           content: `Create a complete vanilla JavaScript web project for: ${prompt}`
         }
       ],
-      temperature: 0.7,
-      max_tokens: 4000
+      temperature,
+      max_tokens: maxTokens
     });
 
     return completion.choices[0]?.message.content || 'Error: No response from OpenAI';
@@ -82,8 +87,13 @@ export const modifyReactNativeCode = async (existingCode: string, modificationPr
   }
 
   try {
+    // Get configuration from environment variables with fallbacks
+    const model = import.meta.env.VITE_OPENAI_MODEL || "gpt-3.5-turbo";
+    const temperature = parseFloat(import.meta.env.VITE_OPENAI_TEMPERATURE || "0.7");
+    const maxTokens = parseInt(import.meta.env.VITE_OPENAI_MAX_TOKENS || "4000", 10);
+
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model,
       messages: [
         {
           role: "system",
@@ -121,8 +131,8 @@ Each file should be complete and properly formatted with the file marker.`
           content: `Here is the existing vanilla JavaScript project code:\n\n${existingCode}\n\nModify this project to: ${modificationPrompt}`
         }
       ],
-      temperature: 0.7,
-      max_tokens: 4000
+      temperature,
+      max_tokens: maxTokens
     });
 
     return completion.choices[0]?.message.content || 'Error: No response from OpenAI';

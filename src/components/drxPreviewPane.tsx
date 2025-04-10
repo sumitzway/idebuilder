@@ -25,7 +25,9 @@ interface LogMessage {
 const PreviewPane = ({ code, refreshKey, onRefresh }: PreviewPaneProps) => {
   const [previewCode, setPreviewCode] = useState(code);
   const [localRefreshKey, setLocalRefreshKey] = useState(0);
-  const [deviceType, setDeviceType] = useState<'mobile' | 'tablet' | 'desktop'>('mobile');
+  const [deviceType, setDeviceType] = useState<'mobile' | 'tablet' | 'desktop'>(
+    (import.meta.env.VITE_DEFAULT_DEVICE as 'mobile' | 'tablet' | 'desktop') || 'mobile'
+  );
   const [showConsole, setShowConsole] = useState(false);
   const [logs, setLogs] = useState<LogMessage[]>([]);
   const [showTimestamps, setShowTimestamps] = useState(true);
@@ -77,10 +79,22 @@ const PreviewPane = ({ code, refreshKey, onRefresh }: PreviewPaneProps) => {
       if (htmlFileMatch) {
         htmlContent = htmlFileMatch[1].trim();
         
-        // Extract just the body content if possible
+        // Extract just the body content if possible, but preserve the full structure if there are alerts
         const bodyContentMatch = htmlContent.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
         if (bodyContentMatch) {
-          return bodyContentMatch[1].trim();
+          const bodyContent = bodyContentMatch[1].trim();
+          // Check if the body content has alerts or alert-related classes
+          if (bodyContent.includes('class="alert') || 
+              bodyContent.includes('class="alert-') || 
+              bodyContent.includes('class="bg-red-') ||
+              bodyContent.includes('class="bg-yellow-') ||
+              bodyContent.includes('class="bg-green-') ||
+              bodyContent.includes('alert-')) {
+            // If it has alerts, return the full body content
+            console.log("Alert components detected in HTML");
+            return bodyContent;
+          }
+          return bodyContent;
         }
         
         return htmlContent;
@@ -91,10 +105,22 @@ const PreviewPane = ({ code, refreshKey, onRefresh }: PreviewPaneProps) => {
       if (anyHtmlMatch) {
         htmlContent = anyHtmlMatch[2].trim();
         
-        // Extract just the body content if possible
+        // Extract just the body content if possible, but preserve the full structure if there are alerts
         const bodyContentMatch = htmlContent.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
         if (bodyContentMatch) {
-          return bodyContentMatch[1].trim();
+          const bodyContent = bodyContentMatch[1].trim();
+          // Check if the body content has alerts or alert-related classes
+          if (bodyContent.includes('class="alert') || 
+              bodyContent.includes('class="alert-') || 
+              bodyContent.includes('class="bg-red-') ||
+              bodyContent.includes('class="bg-yellow-') ||
+              bodyContent.includes('class="bg-green-') ||
+              bodyContent.includes('alert-')) {
+            // If it has alerts, return the full body content
+            console.log("Alert components detected in HTML");
+            return bodyContent;
+          }
+          return bodyContent;
         }
         
         return htmlContent;
@@ -289,6 +315,14 @@ const PreviewPane = ({ code, refreshKey, onRefresh }: PreviewPaneProps) => {
     const jsContent = extractJavaScriptFromCode(code);
     const cssContent = extractCssFromCode(code);
     
+    // Add additional alert-related classes to ensure they're included
+    const additionalClasses = `
+      alert alert-primary alert-secondary alert-success alert-danger alert-warning alert-info alert-light alert-dark
+      bg-blue-100 bg-red-100 bg-yellow-100 bg-green-100 bg-gray-100
+      text-blue-700 text-red-700 text-yellow-700 text-green-700 text-gray-700
+      border-blue-500 border-red-500 border-yellow-500 border-green-500 border-gray-500
+    `;
+    
     return `
       <!DOCTYPE html>
       <html>
@@ -310,10 +344,90 @@ const PreviewPane = ({ code, refreshKey, onRefresh }: PreviewPaneProps) => {
           }
           /* Add a hidden div with all extracted Tailwind classes to ensure they're compiled */
           .tailwind-classes { display: none; }
+          
           /* Common utility classes */
           .btn, .button { display: inline-block; padding: 0.5rem 1rem; border-radius: 0.25rem; }
           .btn-primary, .button-primary { background-color: #3b82f6; color: white; }
           .card { background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); }
+          
+          /* Alert styles */
+          .alert {
+            position: relative;
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+          }
+          .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+          }
+          .alert-info {
+            color: #0c5460;
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+          }
+          .alert-warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+          }
+          .alert-danger, .alert-error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+          }
+          .alert-primary {
+            color: #004085;
+            background-color: #cce5ff;
+            border-color: #b8daff;
+          }
+          .alert-secondary {
+            color: #383d41;
+            background-color: #e2e3e5;
+            border-color: #d6d8db;
+          }
+          
+          /* Bootstrap-compatible alerts */
+          .alert-dismissible {
+            padding-right: 4rem;
+          }
+          .alert-dismissible .close {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 0.75rem 1.25rem;
+            color: inherit;
+            background: transparent;
+            border: 0;
+            cursor: pointer;
+          }
+          .close {
+            float: right;
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #000;
+            text-shadow: 0 1px 0 #fff;
+            opacity: .5;
+          }
+          .close:hover {
+            color: #000;
+            text-decoration: none;
+            opacity: .75;
+          }
+          
+          /* For modern Tailwind alerts */
+          .bg-red-100 { background-color: #fee2e2 !important; }
+          .bg-yellow-100 { background-color: #fef3c7 !important; }
+          .bg-green-100 { background-color: #d1fae5 !important; }
+          .bg-blue-100 { background-color: #dbeafe !important; }
+          
+          .text-red-700 { color: #b91c1c !important; }
+          .text-yellow-700 { color: #a16207 !important; }
+          .text-green-700 { color: #047857 !important; }
+          .text-blue-700 { color: #1d4ed8 !important; }
           
           /* Custom CSS from the generated code */
           ${cssContent}
@@ -324,7 +438,7 @@ const PreviewPane = ({ code, refreshKey, onRefresh }: PreviewPaneProps) => {
           ${content}
         </div>
         <!-- Hidden div with all extracted classes to ensure Tailwind processes them -->
-        <div class="tailwind-classes ${extractedClasses}"></div>
+        <div class="tailwind-classes ${extractedClasses} ${additionalClasses}"></div>
         
         <!-- JavaScript from the generated code -->
         <script>
@@ -381,6 +495,66 @@ const PreviewPane = ({ code, refreshKey, onRefresh }: PreviewPaneProps) => {
           
           document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM fully loaded and parsed');
+            
+            // Initialize alert components if they exist
+            const customAlertInit = () => {
+              // Find all alerts by various class patterns
+              const alertSelectors = [
+                '[class*="alert-"]',
+                '[class*="bg-red-"]',
+                '[class*="bg-yellow-"]', 
+                '[class*="bg-green-"]',
+                '[class*="bg-blue-"]',
+                '.notification',
+                '.message-error',
+                '.message-warning',
+                '.message-success',
+                '.message-info'
+              ];
+              
+              // Process each selector
+              alertSelectors.forEach(selector => {
+                document.querySelectorAll(selector).forEach(el => {
+                  // If it doesn't already have the alert class, add it
+                  if (!el.classList.contains('alert')) {
+                    el.classList.add('alert');
+                  }
+                  
+                  console.log('Alert found and initialized:', el.outerHTML);
+                });
+              });
+              
+              // Create dismiss buttons for alerts that don't have them
+              document.querySelectorAll('.alert').forEach(alert => {
+                // Check if this alert is dismissible but doesn't have a close button
+                if (alert.classList.contains('alert-dismissible') && 
+                    !alert.querySelector('.close')) {
+                  const closeBtn = document.createElement('button');
+                  closeBtn.className = 'close';
+                  closeBtn.setAttribute('type', 'button');
+                  closeBtn.innerHTML = '&times;';
+                  closeBtn.addEventListener('click', function() {
+                    alert.style.display = 'none';
+                  });
+                  alert.appendChild(closeBtn);
+                }
+              });
+              
+              // Add click handlers for existing alert close buttons
+              document.querySelectorAll('.alert .close').forEach(button => {
+                button.addEventListener('click', function() {
+                  const alert = this.closest('.alert');
+                  if (alert) {
+                    alert.style.display = 'none';
+                  }
+                });
+              });
+            };
+            
+            // Run custom alert initialization
+            customAlertInit();
+            
+            // Run the JavaScript from the generated code
             ${jsContent}
             
             // Add event listeners to log button clicks
@@ -554,7 +728,7 @@ const PreviewPane = ({ code, refreshKey, onRefresh }: PreviewPaneProps) => {
               srcDoc={htmlDocument}
               style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
               title="Preview"
-              sandbox="allow-scripts"
+              sandbox="allow-scripts allow-forms allow-modals allow-same-origin"
             />
           </Box>
           
