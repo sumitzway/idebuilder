@@ -43,10 +43,10 @@ Your response MUST follow these rules:
 3. Use Tailwind CSS for styling (via CDN link)
 4. Format your response with clear file markers using the format: // FILE: filename.ext
 5. Add realistic data and functionality
-6. Add appropriate comments explaining the code
+6. Keep comments minimal - only add comments when absolutely necessary for clarity
 7. Ensure the code works directly in browsers without any build steps
 
-CRITICAL REQUIREMENTS FOR BROWSER COMPATIBILITY:
+CRITICAL REQUIREMENTS FOR BROWSER COMPATIBILITY AND RESPONSIVENESS:
 1. ALWAYS include an index.html file as the main entry point
 2. Include all JavaScript in separate .js files
 3. Include all CSS in separate .css files (except Tailwind)
@@ -55,6 +55,18 @@ CRITICAL REQUIREMENTS FOR BROWSER COMPATIBILITY:
 6. Ensure all JavaScript is properly scoped and organized
 7. Use ES6+ features but ensure browser compatibility
 8. Include the Tailwind CSS CDN in the HTML file
+9. Make ALL pages FULLY RESPONSIVE for mobile, tablet, and desktop
+10. Use Tailwind's responsive design utilities (sm:, md:, lg:, xl:) for different screen sizes
+11. Use flex and grid layouts for responsive structures
+12. Ensure text is readable on all device sizes
+13. Test all interactive elements work on touch screens and smaller viewports
+
+IMPORTANT CODE STYLE REQUIREMENTS:
+1. Write clean, efficient code with minimal comments
+2. Your code should be self-explanatory through good naming conventions
+3. Only add comments for complex logic that cannot be understood from variable/function names
+4. Avoid explaining obvious operations with comments
+5. Focus on writing clear, readable code rather than extensively documented code
 
 File structure should include:
 - index.html (main entry point)
@@ -106,8 +118,9 @@ Your response MUST follow these rules:
 4. Make sure all connections between files remain working
 5. Use only vanilla JavaScript, HTML, and CSS with Tailwind (via CDN)
 6. Return the complete modified project with all files
+7. Keep comments minimal - only add comments when absolutely necessary for clarity
 
-CRITICAL REQUIREMENTS FOR BROWSER COMPATIBILITY:
+CRITICAL REQUIREMENTS FOR BROWSER COMPATIBILITY AND RESPONSIVENESS:
 1. ALWAYS include an index.html file as the main entry point
 2. Include all JavaScript in separate .js files
 3. Include all CSS in separate .css files (except Tailwind)
@@ -116,6 +129,19 @@ CRITICAL REQUIREMENTS FOR BROWSER COMPATIBILITY:
 6. Ensure all JavaScript is properly scoped and organized
 7. Use ES6+ features but ensure browser compatibility
 8. Include the Tailwind CSS CDN in the HTML file
+9. Make ALL pages FULLY RESPONSIVE for mobile, tablet, and desktop
+10. Use Tailwind's responsive design utilities (sm:, md:, lg:, xl:) for different screen sizes
+11. Use flex and grid layouts for responsive structures
+12. Ensure text is readable on all device sizes
+13. Test all interactive elements work on touch screens and smaller viewports
+
+IMPORTANT CODE STYLE REQUIREMENTS:
+1. Write clean, efficient code with minimal comments
+2. Your code should be self-explanatory through good naming conventions
+3. Only add comments for complex logic that cannot be understood from variable/function names
+4. Avoid explaining obvious operations with comments
+5. Focus on writing clear, readable code rather than extensively documented code
+6. Match the existing commenting style of the code you're modifying
 
 File structure should be maintained as:
 - index.html (main entry point)
