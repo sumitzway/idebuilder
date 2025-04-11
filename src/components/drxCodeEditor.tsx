@@ -1,6 +1,5 @@
 import { Paper, Typography, IconButton, Snackbar, Box, Tabs, Tab, Tooltip, List, ListItem, ListItemText, ListItemIcon, Divider } from '@mui/material';
 import Editor from '@monaco-editor/react';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import JavascriptIcon from '@mui/icons-material/Javascript';
@@ -25,7 +24,6 @@ interface FileData {
 }
 
 const CodeEditor = ({ code, onCodeChange }: CodeEditorProps) => {
-  const [showCopied, setShowCopied] = useState(false);
   const [showDownloaded, setShowDownloaded] = useState(false);
   const [activeFileIndex, setActiveFileIndex] = useState(0);
   const [files, setFiles] = useState<FileData[]>([{ name: 'Component.tsx', content: code }]);
@@ -84,15 +82,6 @@ const CodeEditor = ({ code, onCodeChange }: CodeEditorProps) => {
       setActiveFileIndex(0);
     }
   }, [code, parseCodeIntoFiles]);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(files[activeFileIndex]?.content || '');
-      setShowCopied(true);
-    } catch (err) {
-      console.error('Failed to copy code:', err);
-    }
-  };
 
   // Function to download all files as a zip
   const handleDownloadAllFiles = async () => {
@@ -251,11 +240,6 @@ const CodeEditor = ({ code, onCodeChange }: CodeEditorProps) => {
           <Tooltip title="Download as ZIP">
             <IconButton onClick={handleDownloadAllFiles} size="small">
               <FileDownloadIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Copy current file">
-            <IconButton onClick={handleCopy} size="small">
-              <ContentCopyIcon />
             </IconButton>
           </Tooltip>
         </Box>
@@ -433,12 +417,6 @@ const CodeEditor = ({ code, onCodeChange }: CodeEditorProps) => {
         </Box>
       </Box>
       
-      <Snackbar
-        open={showCopied}
-        autoHideDuration={2000}
-        onClose={() => setShowCopied(false)}
-        message="Code copied to clipboard"
-      />
       <Snackbar
         open={showDownloaded}
         autoHideDuration={2000}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { Typography, Box, IconButton, ToggleButtonGroup, ToggleButton, Drawer, List, ListItem, ListItemText, Divider, AppBar, Toolbar, Switch, FormControlLabel } from '@mui/material';
+import { Typography, Box, IconButton, ToggleButtonGroup, ToggleButton, List, ListItem, ListItemText, Divider, Switch, FormControlLabel } from '@mui/material';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import SmartphoneIcon from '@mui/icons-material/Smartphone';
 import TabletIcon from '@mui/icons-material/Tablet';
@@ -7,6 +7,10 @@ import LaptopIcon from '@mui/icons-material/Laptop';
 import CloseIcon from '@mui/icons-material/Close';
 import DragHandleIcon from '@mui/icons-material/DragHandle';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+// @ts-ignore - Ignoring type issues with react-split-pane
+import SplitPane from 'react-split-pane';
 
 interface PreviewPaneProps {
   code: string;
@@ -28,9 +32,12 @@ const PreviewPane = ({ code, refreshKey, onRefresh }: PreviewPaneProps) => {
   const [deviceType, setDeviceType] = useState<'mobile' | 'tablet' | 'desktop'>(
     (import.meta.env.VITE_DEFAULT_DEVICE as 'mobile' | 'tablet' | 'desktop') || 'mobile'
   );
-  const [showConsole, setShowConsole] = useState(false);
-  const [logs, setLogs] = useState<LogMessage[]>([]);
+  const [showConsole, setShowConsole] = useState(true);
+  const [logs, setLogs] = useState<LogMessage[]>([
+    { type: 'info', content: 'Console initialized. Listening for logs...', timestamp: new Date() }
+  ]);
   const [showTimestamps, setShowTimestamps] = useState(true);
+  const [consoleHeight, setConsoleHeight] = useState(200);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Update preview code when code, refreshKey, or localRefreshKey changes
@@ -40,24 +47,20 @@ const PreviewPane = ({ code, refreshKey, onRefresh }: PreviewPaneProps) => {
   }, [code, refreshKey, localRefreshKey]);
 
   const handleRefresh = useCallback(() => {
-    // Toggle console visibility instead of just refreshing
-    setShowConsole(prev => !prev);
+    // Increment the refresh key to force a reload
+    setLocalRefreshKey(prev => prev + 1);
     
-    // When showing console, refresh the logs list
-    if (!showConsole) {
-      // Clear previous logs when opening the console
-      setLogs([]);
-      
-      // Since our iframe is already sending messages via postMessage,
-      // we don't need to explicitly call captureLogsFromIframe here
-      // The logs will be captured automatically through the message listener
-      
-      // Add an initial system log
-      setLogs([
-        { type: 'info', content: 'Console initialized. Listening for logs...', timestamp: new Date() }
-      ]);
+    // Add a log about the refresh
+    setLogs(prev => [
+      ...prev,
+      { type: 'info', content: 'Preview refreshed', timestamp: new Date() }
+    ]);
+    
+    // Call the parent's onRefresh if provided
+    if (onRefresh) {
+      onRefresh();
     }
-  }, [onRefresh, showConsole]);
+  }, [onRefresh]);
 
   const handleDeviceChange = (
     event: React.MouseEvent<HTMLElement>,
@@ -604,7 +607,7 @@ const PreviewPane = ({ code, refreshKey, onRefresh }: PreviewPaneProps) => {
     if (!previewCode) {
       return (
         <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-          Enter a prompt to generate vanilla JavaScript code
+          Core preview will be rendered here
         </Typography>
       );
     }
@@ -728,7 +731,7 @@ const PreviewPane = ({ code, refreshKey, onRefresh }: PreviewPaneProps) => {
               srcDoc={htmlDocument}
               style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
               title="Preview"
-              sandbox="allow-scripts allow-forms allow-modals allow-same-origin"
+              sandbox="allow-scripts allow-forms allow-modals"
             />
           </Box>
           
@@ -753,6 +756,51 @@ const PreviewPane = ({ code, refreshKey, onRefresh }: PreviewPaneProps) => {
       { type: 'info', content: 'Console cleared', timestamp: new Date() }
     ]);
   };
+
+  // Toggle console visibility
+  const toggleConsole = () => {
+    setShowConsole(!showConsole);
+  };
+
+  // Handle console resize
+  const startResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // Get the container element's height for relative calculations
+    const containerHeight = document.body.clientHeight;
+    const startY = e.clientY;
+    const startHeight = consoleHeight;
+    
+    // Add a visual indicator during resize
+    document.body.style.cursor = 'ns-resize';
+    
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      // Calculate deltaY with respect to the starting position
+      const deltaY = startY - moveEvent.clientY;
+      
+      // Get a percentage of the container height for responsive resizing
+      // with min/max constraints (100px minimum, 80% of container maximum)
+      const maxHeight = Math.floor(containerHeight * 0.8);
+      const newHeight = Math.min(Math.max(startHeight + deltaY, 100), maxHeight);
+      
+      // Update the state
+      setConsoleHeight(newHeight);
+      
+      // Prevent selection during resize
+      moveEvent.preventDefault();
+    };
+    
+    const onMouseUp = () => {
+      // Clean up
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = '';
+    };
+    
+    // Attach events to document to capture mouse movement even outside the element
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, [consoleHeight]);
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -780,53 +828,94 @@ const PreviewPane = ({ code, refreshKey, onRefresh }: PreviewPaneProps) => {
             </ToggleButton>
           </ToggleButtonGroup>
           <IconButton 
-            onClick={handleRefresh} 
+            onClick={toggleConsole} 
             size="small" 
-            title="Debug preview" 
-            color={showConsole ? "primary" : "default"}
+            title={showConsole ? "Hide console" : "Show console"} 
+            color="primary"
           >
             <BugReportIcon />
           </IconButton>
         </Box>
       </Box>
-      <Box
-        sx={{
-          flexGrow: 1,
+      
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        flexGrow: 1, 
+        height: showConsole ? `calc(100% - ${consoleHeight}px)` : '100%', 
+        transition: 'height 0.3s ease' 
+      }}>
+        <Box sx={{
+          height: '100%',
           bgcolor: 'background.paper',
-          p: 0,
           display: 'flex',
           overflow: 'hidden',
           position: 'relative'
-        }}
-      >
-        {previewContent}
-        
-        {/* Console Drawer */}
-        <Drawer
-          anchor="bottom"
-          open={showConsole}
-          onClose={() => setShowConsole(false)}
-          PaperProps={{
-            sx: {
-              width: '100%',
-              height: '40%',
+        }}>
+          {previewContent}
+        </Box>
+      </Box>
+      
+      {showConsole && (
+        <>
+          <Box 
+            sx={{
+              height: '8px', // Increased height for easier grabbing
+              bgcolor: 'rgba(0,0,0,0.2)',
+              cursor: 'ns-resize',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              '&:hover': {
+                bgcolor: 'primary.main',
+                opacity: 0.7
+              },
+              '&:active': {
+                bgcolor: 'primary.dark',
+                opacity: 0.8
+              },
+              // Visual indicator to show it's draggable
+              '&::after': {
+                content: '""',
+                display: 'block',
+                width: '50px',
+                height: '4px',
+                borderRadius: '2px',
+                bgcolor: 'rgba(255,255,255,0.3)'
+              }
+            }}
+            onMouseDown={startResize}
+          />
+          <Box
+            sx={{
+              height: `${consoleHeight - 8}px`, // Adjust for the new handle height
+              display: 'flex',
+              flexDirection: 'column',
               bgcolor: '#1e1e1e',
               color: '#fff',
               fontFamily: 'monospace',
               fontSize: '0.875rem',
-              borderRadius: '8px 8px 0 0'
-            }
-          }}
-        >
-          <AppBar position="static" color="transparent" elevation={0} sx={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-            <Toolbar variant="dense" sx={{ display: 'flex', justifyContent: 'space-between', minHeight: '48px' }}>
+              position: 'relative'
+            }}
+          >
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              p: 1, 
+              borderBottom: '1px solid rgba(255,255,255,0.1)',
+              bgcolor: 'rgba(0,0,0,0.2)'
+            }}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <DragHandleIcon sx={{ mr: 1, color: 'rgba(255,255,255,0.6)' }} />
-                <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold' }}>
-                  Developer Console
+                <Typography variant="subtitle2" component="div" sx={{ fontWeight: 'bold' }}>
+                  Developer Console <Typography variant="caption" sx={{ opacity: 0.7 }}>(drag handle to resize)</Typography>
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography variant="caption" sx={{ mr: 2, color: 'rgba(255,255,255,0.7)' }}>
+                  {`${consoleHeight}px`}
+                </Typography>
                 <FormControlLabel
                   control={
                     <Switch
@@ -852,54 +941,104 @@ const PreviewPane = ({ code, refreshKey, onRefresh }: PreviewPaneProps) => {
                 </IconButton>
                 <IconButton 
                   size="small" 
-                  onClick={() => setShowConsole(false)}
+                  onClick={toggleConsole}
                   sx={{ color: '#fff' }}
+                  title="Hide console"
                 >
-                  <CloseIcon />
+                  <ExpandMoreIcon />
                 </IconButton>
               </Box>
-            </Toolbar>
-          </AppBar>
-          <List sx={{ overflow: 'auto', p: 1 }}>
-            {logs.length === 0 ? (
-              <ListItem>
-                <ListItemText 
-                  primary="No logs to display" 
-                  sx={{ opacity: 0.5, fontStyle: 'italic' }}
-                />
-              </ListItem>
-            ) : (
-              logs.map((log, index) => (
-                <React.Fragment key={index}>
-                  <ListItem sx={{ 
-                    py: 0.5,
-                    color: log.type === 'error' ? '#ff6b6b' : 
-                           log.type === 'warn' ? '#ffc107' : 
-                           log.type === 'info' ? '#03a9f4' : '#fff'
-                  }}>
-                    <ListItemText 
-                      primary={
-                        <Box component="span">
-                          {showTimestamps && (
-                            <Box component="span" sx={{ opacity: 0.7, mr: 1 }}>
-                              [{log.timestamp.toLocaleTimeString()}]
-                            </Box>
-                          )}
-                          <Box component="span" sx={{ fontWeight: 'bold', mr: 1 }}>
-                            {log.type.toUpperCase()}:
-                          </Box>
-                          {log.content}
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                  {index < logs.length - 1 && <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />}
-                </React.Fragment>
-              ))
-            )}
-          </List>
-        </Drawer>
-      </Box>
+            </Box>
+            <List sx={{ overflow: 'auto', p: 1, flexGrow: 1 }}>
+              {logs.length === 0 ? (
+                <ListItem>
+                  <ListItemText 
+                    primary="No logs to display" 
+                    sx={{ opacity: 0.5, fontStyle: 'italic' }}
+                  />
+                </ListItem>
+              ) : (
+                logs.map((log, index) => {
+                  // Determine log badge background color
+                  const badgeBgColor = 
+                    log.type === 'error' ? 'rgba(255,107,107,0.2)' : 
+                    log.type === 'warn' ? 'rgba(255,193,7,0.2)' : 
+                    log.type === 'info' ? 'rgba(3,169,244,0.2)' : 'transparent';
+                  
+                  // Determine text color
+                  const textColor = 
+                    log.type === 'error' ? '#ff6b6b' : 
+                    log.type === 'warn' ? '#ffc107' : 
+                    log.type === 'info' ? '#03a9f4' : '#fff';
+                  
+                  // Format content - try to parse JSON if applicable
+                  let content = log.content;
+                  if (content.startsWith('{') || content.startsWith('[')) {
+                    try {
+                      const jsonObj = JSON.parse(content);
+                      content = JSON.stringify(jsonObj, null, 2);
+                    } catch (e) {
+                      // Keep original content if parsing fails
+                    }
+                  }
+                  
+                  return (
+                    <React.Fragment key={index}>
+                      <ListItem sx={{ 
+                        py: 0.5,
+                        color: textColor,
+                        fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                        fontSize: '0.85rem',
+                        borderLeft: '3px solid',
+                        borderLeftColor: textColor,
+                        pl: 1,
+                        '&:hover': {
+                          bgcolor: 'rgba(255,255,255,0.05)'
+                        }
+                      }}>
+                        <ListItemText 
+                          disableTypography
+                          primary={
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                                {showTimestamps && (
+                                  <span style={{ opacity: 0.7, marginRight: '8px', fontSize: '0.75rem' }}>
+                                    [{log.timestamp.toLocaleTimeString('en-US', { hour12: false })}]
+                                  </span>
+                                )}
+                                <span style={{ 
+                                  fontWeight: 'bold',
+                                  marginRight: '8px',
+                                  fontSize: '0.75rem',
+                                  textTransform: 'uppercase',
+                                  backgroundColor: badgeBgColor,
+                                  paddingLeft: '4px',
+                                  paddingRight: '4px',
+                                  borderRadius: '2px'
+                                }}>
+                                  {log.type}
+                                </span>
+                                <span style={{ 
+                                  wordBreak: 'break-word',
+                                  fontWeight: log.type === 'error' ? 'bold' : 'normal',
+                                  whiteSpace: 'pre-wrap'
+                                }}>
+                                  {content}
+                                </span>
+                              </div>
+                            </div>
+                          }
+                        />
+                      </ListItem>
+                      {index < logs.length - 1 && <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />}
+                    </React.Fragment>
+                  );
+                })
+              )}
+            </List>
+          </Box>
+        </>
+      )}
     </Box>
   );
 };
