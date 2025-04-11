@@ -241,6 +241,11 @@ const PromptPane = ({ onPromptSubmit }: PromptPaneProps) => {
             variant="outlined"
             size="small"
             disabled={loading}
+            autoComplete="off"
+            inputProps={{
+              list: "none",
+              autoComplete: "off"
+            }}
           />
           <Button
             type="submit"

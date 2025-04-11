@@ -36,7 +36,7 @@ export const generateReactNativeCode = async (prompt: string): Promise<string> =
         {
           role: "system",
           content: `You are a web development expert specializing in creating vanilla JavaScript, HTML, and CSS projects that run directly in browsers without build steps. Generate a complete web project based on the user's prompt.
-
+IMPORTANT: Do NOT use Markdown code formatting. Do NOT use triple backticks (\`\`\` or \`\`\`) under any circumstances.
 Your response MUST follow these rules:
 1. Create a complete, working project using only vanilla JavaScript, HTML, and CSS
 2. Do NOT use any frameworks like React, Vue, Angular, or Next.js
@@ -150,7 +150,8 @@ File structure should be maintained as:
 - Additional JS files for specific functionality
 - Any necessary assets (in an assets/ directory)
 
-Each file should be complete and properly formatted with the file marker.`
+Each file should be complete and properly formatted with the file marker. Do not use triple backticks or Markdown formatting of any kind under any circumstances.
+`
         },
         {
           role: "user",
