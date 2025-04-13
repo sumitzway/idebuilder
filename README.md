@@ -1,129 +1,138 @@
 # IDE Builder: AI-Powered Code Generation Tool
 
-This application allows you to generate web components using OpenAI's API. Simply enter a prompt describing the component or website you want to create, and the AI will generate the code for you. You can also modify existing code by describing the changes you want to make.
+## Overview
+IDE Builder is a sophisticated web-based application that leverages AI to generate and modify code based on natural language prompts. The application features a modern, responsive interface with real-time code generation, preview capabilities, and an interactive development environment.
 
-## Features
+## Quick Start
 
-- Generate vanilla JavaScript, HTML, and CSS code using OpenAI's GPT models
-- Edit generated code in real-time with syntax highlighting
-- Preview the UI of your components with mobile, tablet, and desktop views
-- Modify existing components by describing the changes
-- Tailwind CSS styling for modern, responsive components
-- Fallback to template-based generation when no API key is provided
-- Dark/Light mode toggle
+### Prerequisites
+- Node.js (Latest LTS version recommended)
+- npm (comes with Node.js)
+- OpenAI API key
 
-## Setup
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone [repository-url]
+   cd idebuilder
+   ```
 
-1. Clone this repository
-2. Install dependencies with `npm install`
-3. Obtain an OpenAI API key from [OpenAI's platform](https://platform.openai.com/)
-4. Create a `.env` file based on the examples below and add your API key
-5. Run the development server with `npm run dev`
+2. Install dependencies:
+   ```bash
+   npm install --legacy-peer-deps
+   ```
+   Note: We use `--legacy-peer-deps` due to compatibility requirements with react-split-pane.
 
-## Environment Variables
+3. Configure environment variables:
+   - Copy `.env.example` to `.env` and `.env.development`
+   - Add your OpenAI API key to both files:
+     ```
+     AGENT_OPENAI_API_KEY=your_openai_api_key_here
+     VITE_AGENT_OPENAI_API_KEY=your_openai_api_key_here
+     ```
 
-The application uses environment variables for configuration. You can set these in `.env`, `.env.development`, or `.env.production` files depending on your environment.
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+   The application will automatically find an available port (starting from 3000) and launch.
+   Access the application at:
+   - Local: http://localhost:[PORT]/ (typically 3000, 3001, or 3002)
+   - Network: http://[your-ip]:[PORT]/
 
-### Required Variables
+## Core Components
 
-```
-# OpenAI API Key (Required for AI code generation)
-AGENT_OPENAI_API_KEY=your_api_key_here
-VITE_AGENT_OPENAI_API_KEY=your_api_key_here
-```
+### 1. Main Application (`drxApp.tsx`)
+- Split-pane layout management
+- Theme switching (dark/light mode)
+- OpenAI API integration
+- Fallback code generation
+- Error handling and loading states
 
-### Optional Configuration Variables
+### 2. Prompt Pane (`drxPromptPane.tsx`)
+- Chat-like interface
+- File change tracking
+- Error logging
+- Support for code generation and modifications
 
-```
-# Application Configuration
+### 3. Code Editor (`drxCodeEditor.tsx`)
+- Syntax highlighting
+- Multiple file support
+- Code formatting
+- Error highlighting
+
+### 4. Preview Pane (`drxPreviewPane.tsx`)
+- Real-time preview
+- Mobile/desktop viewport switching
+- Console output display
+
+## Environment Configuration
+
+### Required Environment Variables
+```env
+AGENT_OPENAI_API_KEY=your_openai_api_key_here
+VITE_AGENT_OPENAI_API_KEY=your_openai_api_key_here
 VITE_APP_NAME=IDEBuilder
 VITE_APP_DESCRIPTION=AI-powered code generation tool
 VITE_APP_VERSION=1.0.0
-
-# OpenAI Model Configuration
 VITE_OPENAI_MODEL=gpt-3.5-turbo
 VITE_OPENAI_TEMPERATURE=0.7
 VITE_OPENAI_MAX_TOKENS=4000
-
-# UI Configuration
-VITE_DEFAULT_THEME=light  # Options: 'light' or 'dark'
-VITE_DEFAULT_DEVICE=mobile  # Options: 'mobile', 'tablet', or 'desktop'
-
-# Developer options
-VITE_ENABLE_DEBUG=true
-VITE_SHOW_CONSOLE_LOGS=true
+VITE_DEFAULT_THEME=light
+VITE_DEFAULT_DEVICE=mobile
 ```
 
-## Environment-Specific Configuration
+## Common Issues and Solutions
 
-The application supports different configurations for development and production environments:
+### Port Configuration
+- The application automatically finds an available port
+- Default port sequence: 3000 → 3001 → 3002
+- If all standard ports are in use, it will continue searching for an available port
 
-- `.env` - Default configuration used by both environments
-- `.env.development` - Development-specific overrides (used when running `npm run dev`)
-- `.env.production` - Production-specific overrides (used when running `npm run build`)
+### Known Issues
+1. SplitPane TypeScript Issues
+   - Solution: Use `// @ts-ignore` for SplitPane component
+   - Alternative: Use `--legacy-peer-deps` during installation
 
-## Development
+2. OpenAI API Connection
+   - Ensure API key is properly set in both `.env` and `.env.development`
+   - Check for API key format and validity
 
-To start the development server:
+### Error Handling
+The application implements comprehensive error handling for:
+- API connection issues
+- Code generation failures
+- Preview rendering errors
+- File system operations
+- TypeScript/React compilation errors
 
-```bash
-npm run dev
-```
+## Development Guidelines
 
-To build for production:
+### Best Practices
+1. **Code Style**
+   - Use TypeScript for type safety
+   - Follow React best practices
+   - Maintain consistent error handling
 
-```bash
-npm run build
-```
+2. **Security**
+   - Never commit API keys
+   - Use environment variables for sensitive data
+   - Implement secure preview sandboxing
 
-To preview the production build:
+3. **Performance**
+   - Optimize code generation requests
+   - Implement efficient file handling
+   - Use React.memo for heavy components
 
-```bash
-npm run preview
-```
+### Contributing
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-## Expanding the ESLint configuration
+## License
+[Your License Here]
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+## Support
+For support, please [create an issue](repository-issues-url) or contact the development team.

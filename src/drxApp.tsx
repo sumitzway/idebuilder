@@ -5,6 +5,8 @@ import { Box, Container, Grid, Paper, Alert, CircularProgress, Typography, IconB
 import RefreshIcon from '@mui/icons-material/Refresh';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 // @ts-ignore - Ignoring type issues with react-split-pane
 import SplitPane from 'react-split-pane';
 
@@ -19,6 +21,17 @@ import {
   generateCssFile,
   generateReadmeFile
 } from './services/drxProjectTemplates';
+
+// Add type definition for SplitPane props
+interface SplitPaneProps {
+  split: 'vertical' | 'horizontal';
+  minSize: number;
+  defaultSize: string | number;
+  style?: React.CSSProperties;
+  pane1Style?: React.CSSProperties;
+  pane2Style?: React.CSSProperties;
+  children: React.ReactNode;
+}
 
 /**
  * Generates fallback vanilla JavaScript code when no API key is set
@@ -110,6 +123,7 @@ function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState<number>(0);
+  const [showPreview, setShowPreview] = useState<boolean>(true);
   // Track prompt history to enable incremental modifications
   const [promptHistory, setPromptHistory] = useState<string[]>([]);
   // Theme state based on environment variable
@@ -247,11 +261,18 @@ function App() {
               {import.meta.env.VITE_APP_NAME || 'IDEBuilder'}
             </Typography>
             
-            <Tooltip title={`Switch to ${darkMode ? 'light' : 'dark'} mode`}>
-              <IconButton onClick={toggleTheme} color="inherit">
-                {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-              </IconButton>
-            </Tooltip>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Tooltip title={`${showPreview ? 'Hide' : 'Show'} preview pane`}>
+                <IconButton onClick={() => setShowPreview(!showPreview)} color="inherit">
+                  {showPreview ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={`Switch to ${darkMode ? 'light' : 'dark'} mode`}>
+                <IconButton onClick={toggleTheme} color="inherit">
+                  {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+                </IconButton>
+              </Tooltip>
+            </Box>
           </Box>
           
           {error && (
@@ -265,6 +286,7 @@ function App() {
               ? `calc(100% - ${darkMode ? '89px' : '88px'})` 
               : `calc(100% - ${darkMode ? '57px' : '56px'})` 
           }}>
+            {/* @ts-ignore */}
             <SplitPane 
               split="vertical" 
               minSize={300} 
@@ -291,30 +313,41 @@ function App() {
                 )}
                 <PromptPane 
                   onPromptSubmit={handlePromptSubmit}
+                  currentCode={generatedCode}
                 />
               </Paper>
-              <SplitPane 
-                split="vertical" 
-                minSize={300} 
-                defaultSize="50%" 
-                style={splitPaneStyle}
-                pane1Style={{ overflow: 'hidden' }}
-                pane2Style={{ overflow: 'hidden' }}
-              >
+              {showPreview ? (
+                // @ts-ignore
+                <SplitPane 
+                  split="vertical" 
+                  minSize={300} 
+                  defaultSize="50%" 
+                  style={splitPaneStyle}
+                  pane1Style={{ overflow: 'hidden' }}
+                  pane2Style={{ overflow: 'hidden' }}
+                >
+                  <Paper sx={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                    <CodeEditor 
+                      code={generatedCode} 
+                      onCodeChange={handleCodeChange} 
+                    />
+                  </Paper>
+                  <Paper sx={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                    <PreviewPane 
+                      code={generatedCode} 
+                      onRefresh={handleRefreshPreview}
+                      refreshKey={refreshKey}
+                    />
+                  </Paper>
+                </SplitPane>
+              ) : (
                 <Paper sx={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                   <CodeEditor 
                     code={generatedCode} 
                     onCodeChange={handleCodeChange} 
                   />
                 </Paper>
-                <Paper sx={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                  <PreviewPane 
-                    code={generatedCode} 
-                    onRefresh={handleRefreshPreview}
-                    refreshKey={refreshKey}
-                  />
-                </Paper>
-              </SplitPane>
+              )}
             </SplitPane>
           </Box>
         </Box>
