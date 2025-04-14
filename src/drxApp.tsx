@@ -318,10 +318,10 @@ function App() {
               </Paper>
               {showPreview ? (
                 // @ts-ignore
-                <SplitPane 
-                  split="vertical" 
-                  minSize={300} 
-                  defaultSize="50%" 
+                <SplitPane
+                  split="vertical"
+                  minSize={300}
+                  defaultSize="50%"
                   style={splitPaneStyle}
                   pane1Style={{ overflow: 'hidden' }}
                   pane2Style={{ overflow: 'hidden' }}
